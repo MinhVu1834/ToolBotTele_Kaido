@@ -41,7 +41,7 @@ debug_get_id_mode = set()
 # Lấy FILE_ID bằng lệnh /getid
 IMG_START = "AgACAgUAAxkBAANDaVj45BYSjgIHGt3vOoWX8epYF9MAAnwMaxvPJMhWcZ_jvT8-BcABAAMCAAN5AAM4BA"
 IMG_PROMO = "AgACAgUAAxkBAAM_aVj420ph9XsxWETo3iXfDkVwipAAAnoMaxvPJMhW3zwxk2KaO6EBAAMCAAN5AAM4BA"
-IMG_GAME = "AgACAgUAAxkBAAM_aVj420ph9XsxWETo3iXfDkVwipAAAnoMaxvPJMhW3zwxk2KaO6EBAAMCAAN5AAM4BA"
+IMG_GAME = "AgACAgUAAxkBAANJaVj5VkbhlsMrOFb3M9qaiQoMQDAAAoAMaxvPJMhWNOhwLpHLJWIBAAMCAAN4AAM4BA"
 IMG_PAYMENT = "AgACAgUAAxkBAANJaVj5VkbhlsMrOFb3M9qaiQoMQDAAAoAMaxvPJMhWNOhwLpHLJWIBAAMCAAN4AAM4BA"
 IMG_AMOUNT = "AgACAgUAAxkBAANHaVj47H7wGbLPWn2-58-GOh7-oiAAAn4MaxvPJMhWJU0iPslymuUBAAMCAAN5AAM4BA"
 IMG_DONE = "AgACAgUAAxkBAANBaVj44H9djXGhODpRujJ-THA2H-IAAnsMaxvPJMhW0RuBm96IuAQBAAMCAAN5AAM4BA"
@@ -122,7 +122,6 @@ def ask_promo(chat_id: int, username: str):
     text = (
         f"✅ Bot đã nhận tên tài khoản: *{username}*\n\n"
         "🎁 Anh muốn nhận *khuyến mãi mốc nào* ạ?\n"
-        "Ví dụ: 200k / 500k / 1tr / 3tr"
     )
     safe_send_photo(chat_id, IMG_PROMO, text)
 
@@ -131,37 +130,34 @@ def ask_promo(chat_id: int, username: str):
 def ask_game(chat_id: int, promo: str):
     text = (
         f"🎁 Okie anh chọn mốc: *{promo}* ✅\n\n"
-        "Anh thường chơi *game gì* (slot / live / thể thao / bắn cá / game bài) ạ?"
+        "Anh thường chơi *game gì* (Nổ hũ / Bcr / thể thao / bắn cá / game bài) ạ?"
     )
     safe_send_photo(chat_id, IMG_GAME, text)
 
 
 def ask_send_receipt(chat_id: int, username: str, game: str):
     text = (
-        f"Okie, bot đã ghi nhận anh muốn chơi: *{game}* ✅\n\n"
-        "Giờ anh **chuyển khoản nạp đầu**.\n"
-        "Chuyển xong anh **chụp ảnh/biên lai** gửi lại ngay tại đây để bot cộng khuyến mãi tự động cho mình anh nhé."
+        f"Okie anh, bot đã ghi nhận anh muốn chơi: *{game}* ✅\n\n"
+        "Giờ anh gửi bot ảnh **chuyển khoản nạp đầu** ngay tại đây để bot cộng khuyến mãi tự động cho mình anh nhé..\n"
     )
     safe_send_photo(chat_id, IMG_PAYMENT, text)
 
 
 def ask_amount(chat_id: int):
-    text = "✅ Đã nhận ảnh. Anh nạp *bao nhiêu tiền* (số tiền) để bot đối soát nhanh?"
+    text = "✅ Đã nhận ảnh. Anh nạp *bao nhiêu tiền*  để bot đối soát cho nhanh ạ?"
     safe_send_photo(chat_id, IMG_AMOUNT, text)
 
 
 def send_to_admin(chat_id: int, tg_username: str, username: str, promo: str, game: str, amount: str, receipt_file_id: str):
     time_str = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
 
-    caption = f"""📥 NẠP ĐẦU MỚI
+    caption = f"""KHÁCh NẠP ĐẦU MỚI
 
-👤 Telegram: {tg_username}
-🆔 Tài khoản: {username}
-🎁 Mốc KM: {promo}
-🎮 Game: {game}
-💰 Số tiền: {amount}
-📌 Chat ID: {chat_id}
-⏱ Thời gian: {time_str}"""
+ Telegram: {tg_username}
+ Tài khoản: {username}
+ Mốc KM: {promo}
+ Game: {game}
+ Số tiền: {amount}"""
 
     bot.send_photo(ADMIN_CHAT_ID, receipt_file_id, caption=caption)
 
