@@ -28,13 +28,23 @@ server = Flask(__name__)
 # State user
 # user_state[chat_id] có thể là:
 #   "WAITING_USERNAME"
-#   {"state":"WAITING_GAME","username":...}
-#   {"state":"WAITING_RECEIPT","username":...,"game":...}
-#   {"state":"WAITING_AMOUNT","username":...,"game":...,"receipt_file_id":...}
+#   {"state":"WAITING_PROMO","username":...}
+#   {"state":"WAITING_GAME","username":...,"promo":...}
+#   {"state":"WAITING_RECEIPT","username":...,"promo":...,"game":...}
+#   {"state":"WAITING_AMOUNT","username":...,"promo":...,"game":...,"receipt_file_id":...}
 user_state = {}
 
 # Debug get file_id
 debug_get_id_mode = set()
+
+# ================== ẢNH BOT (THAY FILE_ID CỦA BẠN) ==================
+# Lấy FILE_ID bằng lệnh /getid
+IMG_START = "PUT_FILE_ID_HERE"
+IMG_PROMO = "PUT_FILE_ID_HERE"
+IMG_GAME = "PUT_FILE_ID_HERE"
+IMG_PAYMENT = "PUT_FILE_ID_HERE"
+IMG_AMOUNT = "PUT_FILE_ID_HERE"
+IMG_DONE = "PUT_FILE_ID_HERE"
 
 
 # ================== KEEP ALIVE ==================
@@ -83,24 +93,47 @@ def reset_flow(chat_id: int):
     user_state[chat_id] = "WAITING_USERNAME"
 
 
+def safe_send_photo(chat_id: int, file_id: str, caption: str, parse_mode: str = "Markdown"):
+    """
+    Gửi ảnh kèm caption. Nếu file_id lỗi/chưa set thì fallback sang text để bot không crash.
+    """
+    try:
+        if file_id and file_id != "PUT_FILE_ID_HERE":
+            bot.send_photo(chat_id, file_id, caption=caption, parse_mode=parse_mode)
+        else:
+            bot.send_message(chat_id, caption, parse_mode=parse_mode)
+    except Exception as e:
+        print("Lỗi send_photo fallback -> send_message:", e)
+        bot.send_message(chat_id, caption, parse_mode=parse_mode)
+
+
 def start_message(chat_id: int):
-    # Không dùng nút chọn — gọn
     text = (
         "🎁 Chào anh! Hiện tại U888 đang có khuyến mãi nạp đầu ạ.\n\n"
-        "✅ Anh gửi giúp bot tên tài khoản game dùng để đăng nhập nhé.\n\n"
-        f"Nếu chưa có tài khoản, anh đăng ký tại đây rồi gửi giúp bot tên tài khoản nhé: {REG_LINK}"
+        "✅ Anh gửi giúp bot *tên tài khoản game* dùng để đăng nhập nhé.\n\n"
+        f"Nếu chưa có tài khoản, anh đăng ký tại đây rồi gửi giúp bot tên tài khoản nhé:\n{REG_LINK}"
     )
-    bot.send_message(chat_id, text, parse_mode="Markdown")
+    safe_send_photo(chat_id, IMG_START, text)
     reset_flow(chat_id)
 
 
-def ask_game(chat_id: int, username: str):
-    bot.send_message(
-        chat_id,
-        f"✅ Bot đã nhận: *{username}*\n\n"
-        "Anh thường chơi *game gì* (slot / live / thể thao / bắn cá / game bài) ạ?",
-        parse_mode="Markdown",
+# ✅ SỬA KỊCH BẢN: Sau khi nhận username -> hỏi mốc khuyến mãi (không hỏi game nữa)
+def ask_promo(chat_id: int, username: str):
+    text = (
+        f"✅ Bot đã nhận tên tài khoản: *{username}*\n\n"
+        "🎁 Anh muốn nhận *khuyến mãi mốc nào* ạ?\n"
+        "Ví dụ: 200k / 500k / 1tr / 3tr"
     )
+    safe_send_photo(chat_id, IMG_PROMO, text)
+
+
+# Sau khi khách trả lời mốc khuyến mãi -> mới hỏi game
+def ask_game(chat_id: int, promo: str):
+    text = (
+        f"🎁 Okie anh chọn mốc: *{promo}* ✅\n\n"
+        "Anh thường chơi *game gì* (slot / live / thể thao / bắn cá / game bài) ạ?"
+    )
+    safe_send_photo(chat_id, IMG_GAME, text)
 
 
 def ask_send_receipt(chat_id: int, username: str, game: str):
@@ -109,24 +142,27 @@ def ask_send_receipt(chat_id: int, username: str, game: str):
         "Giờ anh **chuyển khoản nạp đầu**.\n"
         "Chuyển xong anh **chụp ảnh/biên lai** gửi lại ngay tại đây để bot cộng khuyến mãi tự động cho mình anh nhé."
     )
-    bot.send_message(chat_id, text, parse_mode="Markdown")
+    safe_send_photo(chat_id, IMG_PAYMENT, text)
 
 
 def ask_amount(chat_id: int):
-    bot.send_message(chat_id, "✅ Đã nhận ảnh. Anh nạp *bao nhiêu tiền* (số tiền) để bot đối soát nhanh?", parse_mode="Markdown")
+    text = "✅ Đã nhận ảnh. Anh nạp *bao nhiêu tiền* (số tiền) để bot đối soát nhanh?"
+    safe_send_photo(chat_id, IMG_AMOUNT, text)
 
 
-def send_to_admin(chat_id: int, tg_username: str, username: str, game: str, amount: str, receipt_file_id: str):
+def send_to_admin(chat_id: int, tg_username: str, username: str, promo: str, game: str, amount: str, receipt_file_id: str):
     time_str = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
-    caption = (
-        "KHÁCH GỬI BIÊN LAI\n\n"
-        f"Telegram: {tg_username}\n"
-        f"Tài khoản: {username}\n"
-        f"Game: {game}\n"
-        f"Số tiền: {amount}\n"
-    )
 
-    # gửi ảnh trước, caption kèm info
+    caption = f"""📥 NẠP ĐẦU MỚI
+
+👤 Telegram: {tg_username}
+🆔 Tài khoản: {username}
+🎁 Mốc KM: {promo}
+🎮 Game: {game}
+💰 Số tiền: {amount}
+📌 Chat ID: {chat_id}
+⏱ Thời gian: {time_str}"""
+
     bot.send_photo(ADMIN_CHAT_ID, receipt_file_id, caption=caption)
 
 
@@ -152,7 +188,6 @@ def handle_text(message):
     text = (message.text or "").strip()
     print(">>> text:", text, "from", chat_id)
 
-    # Nếu user gõ lệnh, để command handler xử lý (tránh dính vào flow)
     if text.startswith("/"):
         return
 
@@ -161,38 +196,50 @@ def handle_text(message):
     # 1) Chờ username
     if state == "WAITING_USERNAME":
         username = text
-        user_state[chat_id] = {"state": "WAITING_GAME", "username": username}
-        ask_game(chat_id, username)
+        user_state[chat_id] = {"state": "WAITING_PROMO", "username": username}
+        ask_promo(chat_id, username)
         return
 
-    # 2) Chờ game
+    # 2) Chờ mốc khuyến mãi
+    if isinstance(state, dict) and state.get("state") == "WAITING_PROMO":
+        promo = text
+        username = state.get("username", "")
+        user_state[chat_id] = {"state": "WAITING_GAME", "username": username, "promo": promo}
+        ask_game(chat_id, promo)
+        return
+
+    # 3) Chờ game
     if isinstance(state, dict) and state.get("state") == "WAITING_GAME":
         game = text
         username = state.get("username", "")
-        user_state[chat_id] = {"state": "WAITING_RECEIPT", "username": username, "game": game}
+        promo = state.get("promo", "")
+        user_state[chat_id] = {"state": "WAITING_RECEIPT", "username": username, "promo": promo, "game": game}
         ask_send_receipt(chat_id, username, game)
         return
 
-    # 3) Chờ số tiền (sau khi nhận ảnh)
+    # 4) Chờ số tiền (sau khi nhận ảnh)
     if isinstance(state, dict) and state.get("state") == "WAITING_AMOUNT":
         amount = text
         username = state.get("username", "(không rõ)")
+        promo = state.get("promo", "(không rõ)")
         game = state.get("game", "(không rõ)")
         receipt_file_id = state.get("receipt_file_id")
 
         tg_username = f"@{message.from_user.username}" if message.from_user and message.from_user.username else "Không có"
 
         try:
-            send_to_admin(chat_id, tg_username, username, game, amount, receipt_file_id)
-            bot.send_message(
-                chat_id,
-                f"✅ Bot đã nhận đủ thông tin.\n"
-                f"• Username: *{username}*\n"
+            send_to_admin(chat_id, tg_username, username, promo, game, amount, receipt_file_id)
+
+            done_text = (
+                "✅ Bot đã nhận đủ thông tin.\n"
+                f"• Tài khoản: *{username}*\n"
+                f"• Mốc KM: *{promo}*\n"
                 f"• Game: *{game}*\n"
                 f"• Số tiền: *{amount}*\n\n"
-                "Bot chuyển admin duyệt và cộng **khuyến mãi nạp đầu** cho mình ngay nhé ❤️",
-                parse_mode="Markdown",
+                "Bot chuyển admin duyệt và cộng **khuyến mãi nạp đầu** cho mình ngay nhé ❤️"
             )
+            safe_send_photo(chat_id, IMG_DONE, done_text)
+
         except Exception as e:
             print("Lỗi gửi admin:", e)
             bot.send_message(chat_id, "⚠️ Mình gửi thông tin lên admin bị lỗi. Bạn nhắn CSKH giúp mình nhé ạ.")
@@ -200,7 +247,6 @@ def handle_text(message):
         user_state[chat_id] = None
         return
 
-    # Nếu user nhắn lung tung ngoài flow:
     bot.send_message(chat_id, "Bạn gõ /start để bắt đầu nhận khuyến mãi nạp đầu nhé ✅")
 
 
@@ -229,7 +275,6 @@ def handle_media(message):
 
     # Chỉ nhận ảnh/biên lai khi đang WAITING_RECEIPT
     if not (isinstance(state, dict) and state.get("state") == "WAITING_RECEIPT"):
-        # nếu user gửi ảnh sai lúc, nhắc nhẹ
         bot.send_message(chat_id, "Bạn gõ /start để làm đúng quy trình nhận khuyến mãi nạp đầu nhé ✅")
         return
 
@@ -246,6 +291,7 @@ def handle_media(message):
     user_state[chat_id] = {
         "state": "WAITING_AMOUNT",
         "username": state.get("username", ""),
+        "promo": state.get("promo", ""),
         "game": state.get("game", ""),
         "receipt_file_id": receipt_file_id,
     }
