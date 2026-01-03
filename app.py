@@ -12,8 +12,8 @@ from flask import Flask, request
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))
 
-REG_LINK = "https://u888h8.com?f=5059859"
-WEBAPP_LINK = "https://u888h8.com?f=5059859"  # chưa dùng, để sẵn
+REG_LINK = "https://u888h8.com?f=5051573"
+WEBAPP_LINK = "https://u888h8.com?f=5051573"  # chưa dùng, để sẵn
 
 # Keep-alive (Render)
 ENABLE_KEEP_ALIVE = os.getenv("ENABLE_KEEP_ALIVE", "false").lower() == "true"
@@ -86,9 +86,9 @@ def reset_flow(chat_id: int):
 def start_message(chat_id: int):
     # Không dùng nút chọn — gọn
     text = (
-        "🎁 Chào bạn! Hiện có **khuyến mãi nạp đầu**.\n\n"
-        "✅ Bạn gửi giúp mình **tên tài khoản (username)** bạn dùng để đăng nhập nhé.\n\n"
-        f"Nếu chưa có tài khoản, đăng ký tại đây: {REG_LINK}"
+        "🎁 Chào anh! Hiện tại U888 đang có khuyến mãi nạp đầu ạ.\n\n"
+        "✅ Anh gửi giúp bot tên tài khoản game dùng để đăng nhập nhé.\n\n"
+        f"Nếu chưa có tài khoản, anh đăng ký tại đây rồi gửi giúp bot tên tài khoản nhé: {REG_LINK}"
     )
     bot.send_message(chat_id, text, parse_mode="Markdown")
     reset_flow(chat_id)
@@ -97,36 +97,33 @@ def start_message(chat_id: int):
 def ask_game(chat_id: int, username: str):
     bot.send_message(
         chat_id,
-        f"✅ Mình đã nhận: *{username}*\n\n"
-        "Bạn muốn chơi *game gì* (slot / live / thể thao / bắn cá / game bài)?",
+        f"✅ Bot đã nhận: *{username}*\n\n"
+        "Anh thường chơi *game gì* (slot / live / thể thao / bắn cá / game bài) ạ?",
         parse_mode="Markdown",
     )
 
 
 def ask_send_receipt(chat_id: int, username: str, game: str):
     text = (
-        f"Okie, mình ghi nhận bạn muốn chơi: *{game}* ✅\n\n"
-        "Giờ bạn **chuyển khoản nạp đầu**.\n"
-        f"📌 Nội dung chuyển khoản: *NAP {username}*\n\n"
-        "Chuyển xong bạn **chụp ảnh/biên lai** gửi lại ngay tại đây để mình cộng khuyến mãi."
+        f"Okie, bot đã ghi nhận anh muốn chơi: *{game}* ✅\n\n"
+        "Giờ anh **chuyển khoản nạp đầu**.\n"
+        "Chuyển xong anh **chụp ảnh/biên lai** gửi lại ngay tại đây để bot cộng khuyến mãi tự động cho mình anh nhé."
     )
     bot.send_message(chat_id, text, parse_mode="Markdown")
 
 
 def ask_amount(chat_id: int):
-    bot.send_message(chat_id, "✅ Đã nhận ảnh. Bạn nạp *bao nhiêu tiền* (số tiền) để mình đối soát nhanh?", parse_mode="Markdown")
+    bot.send_message(chat_id, "✅ Đã nhận ảnh. Anh nạp *bao nhiêu tiền* (số tiền) để bot đối soát nhanh?", parse_mode="Markdown")
 
 
 def send_to_admin(chat_id: int, tg_username: str, username: str, game: str, amount: str, receipt_file_id: str):
     time_str = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
     caption = (
-        "📩 KHÁCH NẠP ĐẦU - GỬI BIÊN LAI\n\n"
-        f"👤 Telegram: {tg_username}\n"
-        f"🧾 Tài khoản: {username}\n"
-        f"🎮 Game: {game}\n"
-        f"💰 Số tiền: {amount}\n"
-        f"🆔 Chat ID: {chat_id}\n"
-        f"⏰ Thời gian: {time_str}"
+        "KHÁCH GỬI BIÊN LAI\n\n"
+        f"Telegram: {tg_username}\n"
+        f"Tài khoản: {username}\n"
+        f"Game: {game}\n"
+        f"Số tiền: {amount}\n"
     )
 
     # gửi ảnh trước, caption kèm info
@@ -189,11 +186,11 @@ def handle_text(message):
             send_to_admin(chat_id, tg_username, username, game, amount, receipt_file_id)
             bot.send_message(
                 chat_id,
-                f"✅ Mình đã nhận đủ thông tin.\n"
+                f"✅ Bot đã nhận đủ thông tin.\n"
                 f"• Username: *{username}*\n"
                 f"• Game: *{game}*\n"
                 f"• Số tiền: *{amount}*\n\n"
-                "Mình chuyển admin duyệt và cộng **khuyến mãi nạp đầu** cho bạn ngay nhé ❤️",
+                "Bot chuyển admin duyệt và cộng **khuyến mãi nạp đầu** cho mình ngay nhé ❤️",
                 parse_mode="Markdown",
             )
         except Exception as e:
